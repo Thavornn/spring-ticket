@@ -55,7 +55,7 @@ public class TicketController {
         );
         TICKETS.add(ticket);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Response<>(true, "Ticket created success", HttpStatus.CREATED, ticket));
+                .body(new Response<>(true, "Ticket  successfully created", HttpStatus.CREATED, ticket));
     }
 
     @GetMapping("/{ticket-id}")
@@ -92,7 +92,7 @@ public class TicketController {
                 filteredTickets.add(ticket);
             }
         }
-        return ResponseEntity.ok(new Response<>(true, "Tickets filtered successfully", HttpStatus.OK, filteredTickets));
+        return ResponseEntity.ok(new Response<>(true, "Tickets filtered successful", HttpStatus.OK, filteredTickets));
     }
 
     @PutMapping("/{ticket-id}")
@@ -121,7 +121,7 @@ public class TicketController {
         for (Ticket ticket : TICKETS) {
             if (ticket.getTicketId().equals(ticketId)) {
                 TICKETS.remove(ticket);
-                return ResponseEntity.ok(new Response<>(true, "Ticket deleted successfully", HttpStatus.OK, "Deleted ticket ID: " + ticketId));
+                return ResponseEntity.ok(new Response<>(true, "Ticket deleted successful    ", HttpStatus.OK, "Deleted ticket ID : " + ticketId));
             }
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
