@@ -1,10 +1,15 @@
 pipeline {
-    agent any
+    // Use a Docker image with Docker CLI installed
+    agent {
+        docker {
+            image 'docker:24.0-dind'  // Docker-in-Docker image
+            args '--privileged'        // Needed for DinD
+        }
+    }
 
     environment {
-        IMAGE_REPO = "pinkmelon/springhw"          // Your Docker Hub repository
-        DOCKER_CREDENTIALS_ID = "dockerhub-token" // Jenkins credential for Docker Hub
-        TAG_FILE = "last-tag.txt"                 // File to track last image tag
+        IMAGE_REPO = "pinkmelon/springhw" // Your Docker Hub repository
+        TAG_FILE = "last-tag.txt"         // File to track last image tag
     }
 
     stages {
@@ -23,13 +28,14 @@ pipeline {
                 script {
                     echo "Step 2: Determining the next image tag..."
 
-                    // Default to 0 if no previous tag
                     def lastTag = 0
                     if (fileExists(TAG_FILE)) {
                         lastTag = readFile(TAG_FILE).trim().toInteger()
                     }
 
-                    IMAGE_TAG = (lastTag + 1).toString()
+                    // Use def to avoid warning
+                    def imageTag = (lastTag + 1).toString()
+                    env.IMAGE_TAG = imageTag
                     echo "📦 New Docker image tag: ${IMAGE_TAG}"
 
                     // Save the tag for next build
@@ -38,20 +44,17 @@ pipeline {
             }
         }
 
-        // 3. Build and push Docker image (simple shell commands)
+        // 3. Build and push Docker image
         stage('Build & Push Docker Image') {
             steps {
+                echo "Step 3: Building and pushing Docker image..."
                 sh '''
-                    echo "Building Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
                     docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
-
-                    echo "Pushing Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
                     docker push ${IMAGE_REPO}:${IMAGE_TAG}
                 '''
             }
         }
-
-    } // <-- This closes the 'stages' block
+    }
 
     // 4. Post actions
     post {
