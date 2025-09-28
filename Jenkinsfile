@@ -40,26 +40,17 @@ pipeline {
 
         // 3. Build and push Docker image (simple shell commands)
         stage('Build & Push Docker Image') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_CREDENTIALS_ID}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                        echo "Step 3: Logging in to Docker Hub..."
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+             steps {
+                 sh '''
+                    echo "Building Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
+                     docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
 
-                        echo "Step 3: Building Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
-                        docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
-
-                        echo "Step 3: Pushing Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
-                        docker push ${IMAGE_REPO}:${IMAGE_TAG}
-                    '''
-                }
+                    echo "Pushing Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
+                    docker push ${IMAGE_REPO}:${IMAGE_TAG}
+                '''
             }
         }
-    }
+
 
     // 4. Post actions
     post {
