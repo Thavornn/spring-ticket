@@ -40,10 +40,10 @@ pipeline {
 
         // 3. Build and push Docker image (simple shell commands)
         stage('Build & Push Docker Image') {
-             steps {
-                 sh '''
+            steps {
+                sh '''
                     echo "Building Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
-                     docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
+                    docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
 
                     echo "Pushing Docker image ${IMAGE_REPO}:${IMAGE_TAG}..."
                     docker push ${IMAGE_REPO}:${IMAGE_TAG}
@@ -51,6 +51,7 @@ pipeline {
             }
         }
 
+    } // <-- This closes the 'stages' block
 
     // 4. Post actions
     post {
