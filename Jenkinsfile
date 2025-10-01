@@ -22,7 +22,7 @@ spec:
           memory: "1Gi"
           cpu: "1"
     - name: jnlp
-      image: jenkins/inbound-agent:4.13-3
+      image: jenkins/inbound-agent:latest
       args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
       resources:
         requests:
