@@ -9,15 +9,17 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Thavornn/spring-product'
+                git branch: 'main', url: 'https://github.com/Thavornn/17_Yin_Chheng-Thavorn_SR_SPRING_HOMEWORK001'
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                sh './gradlew clean test'
-            }
-        }
+stage('Run Tests') {
+    steps {
+        // Run Maven tests
+        sh './mvnw clean test'
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
