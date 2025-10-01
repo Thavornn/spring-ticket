@@ -1,68 +1,48 @@
 pipeline {
-    // Use a Docker image with Docker CLI installed
-    agent {
-        docker {
-            image 'docker:24.0-dind'  // Docker-in-Docker image
-            args '--privileged'        // Needed for DinD
-        }
-    }
+    agent any
 
     environment {
-        IMAGE_REPO = "pinkmelon/springhw" // Your Docker Hub repository
-        TAG_FILE = "last-tag.txt"         // File to track last image tag
+        DOCKERHUB_USERNAME = "pinkmelon"  
+        IMAGE_NAME = "pinkmelon/spring-product" // Docker repo format
     }
 
     stages {
-
-        // 1. Checkout the Spring project
-        stage('Checkout Project') {
+        stage('Checkout') {
             steps {
-                echo "Step 1: Checking out the project from Git..."
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Thavornn/spring-product'
             }
         }
 
-        // 2. Determine next Docker image tag
-        stage('Determine Image Tag') {
+        stage('Run Tests') {
             steps {
-                script {
-                    echo "Step 2: Determining the next image tag..."
+                sh './gradlew clean test'
+            }
+        }
 
-                    def lastTag = 0
-                    if (fileExists(TAG_FILE)) {
-                        lastTag = readFile(TAG_FILE).trim().toInteger()
-                    }
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+            }
+        }
 
-                    // Use def to avoid warning
-                    def imageTag = (lastTag + 1).toString()
-                    env.IMAGE_TAG = imageTag
-                    echo "📦 New Docker image tag: ${IMAGE_TAG}"
-
-                    // Save the tag for next build
-                    writeFile file: TAG_FILE, text: IMAGE_TAG
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub-pat', variable: 'DOCKERHUB_TOKEN')]) {
+                    sh "echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin"
+                    sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
+                    sh "docker push ${IMAGE_NAME}:latest"
                 }
-            }
-        }
-
-        // 3. Build and push Docker image
-        stage('Build & Push Docker Image') {
-            steps {
-                echo "Step 3: Building and pushing Docker image..."
-                sh '''
-                    docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
-                    docker push ${IMAGE_REPO}:${IMAGE_TAG}
-                '''
             }
         }
     }
 
-    // 4. Post actions
     post {
         success {
-            echo "🎉 Pipeline finished! Docker image: ${IMAGE_REPO}:${IMAGE_TAG} pushed successfully."
+            echo 'Pipeline succeeded!'
         }
         failure {
-            echo "❌ Pipeline failed. Check Jenkins logs for details."
+            echo 'Pipeline failed!'
         }
     }
 }
