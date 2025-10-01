@@ -23,15 +23,15 @@ spec:
 
     environment {
         DOCKER_REG = 'pinkmelon'
-        IMAGE_REPO = "${env.DOCKER_REG}/my-app"
+        IMAGE_REPO = "${env.DOCKER_REG}/spring-ticket"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
-        CD_BRANCH  = 'master'
+        CD_BRANCH  = 'main'
     }
 
     stages {
         stage('Checkout Source') {
             steps {
-                git branch: "${CD_BRANCH}", url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git', credentialsId: 'github-token'
+                git branch: "${CD_BRANCH}", url: 'https://github.com/Thavornn/spring-ticket.git', credentialsId: 'github-token'
             }
         }
 
