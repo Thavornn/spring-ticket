@@ -14,9 +14,20 @@ spec:
       command:
         - cat
       tty: true
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "1Gi"
+          cpu: "1"
     - name: jnlp
-      image: jenkins/inbound-agent:latest
+      image: jenkins/inbound-agent:4.13-3
       args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "200m"
 '''
         }
     }
@@ -26,6 +37,11 @@ spec:
         IMAGE_REPO = "${env.DOCKER_REG}/spring-ticket"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CD_BRANCH  = 'main'
+    }
+
+    options {
+        // Keep pods alive for debugging (10 minutes)
+        timeout(time: 10, unit: 'MINUTES')
     }
 
     stages {
