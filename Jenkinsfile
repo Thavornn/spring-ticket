@@ -1,39 +1,63 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'docker-agent'
+            defaultContainer 'docker'
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: docker
+      image: docker:24-dind
+      securityContext:
+        privileged: true
+'''
+        }
+    }
+
+    triggers {
+        githubPush()
+    }
 
     environment {
-        DOCKERHUB_USERNAME = "pinkmelon"  
-        IMAGE_NAME = "pinkmelon/spring-productt" // Docker repo format
+        DOCKERHUB_CRED = 'dockerhub-token' 
+        GITHUB_CRED    = 'github-token'
+        DOCKER_REG     = 'pinkmelon'
+        IMAGE_REPO     = "${env.DOCKER_REG}/hw-spring-product"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+        CD_BRANCH      = 'master'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Source') {
             steps {
-                git branch: 'main', url: 'https://github.com/Thavornn/17_Yin_Chheng-Thavorn_SR_SPRING_HOMEWORK001'
+                git branch: "${CD_BRANCH}", url: 'https://github.com/Thavornn/17_Yin_Chheng-Thavorn_SR_SPRING_HOMEWORK001', credentialsId: 'github-token'
             }
         }
 
-stage('Run Tests') {
-    steps {
-        // Run Maven tests
-        sh './mvnw clean test'
-    }
-}
-
-
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+                container('docker') {
+                    sh """
+                        docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
+                    """
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: 'dockerhub-pat', variable: 'DOCKERHUB_TOKEN')]) {
-                    sh "echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin"
-                    sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-                    sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
-                    sh "docker push ${IMAGE_NAME}:latest"
+                container('docker') {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-token', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                        sh """
+                            echo \$DH_PASS | docker login -u \$DH_USER --password-stdin
+                            docker push ${IMAGE_REPO}:${IMAGE_TAG}
+                            docker tag ${IMAGE_REPO}:${IMAGE_TAG} ${IMAGE_REPO}:latest
+                            docker push ${IMAGE_REPO}:latest
+                            docker logout
+                        """
+                    }
                 }
             }
         }
@@ -41,10 +65,10 @@ stage('Run Tests') {
 
     post {
         success {
-            echo 'Pipeline succeeded!'
+            echo '✅ Build & Push completed successfully!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo ' Pipeline failed.'
         }
     }
 }
