@@ -14,21 +14,11 @@ spec:
       command:
         - cat
       tty: true
-      resources:
-        requests:
-          memory: "512Mi"
-          cpu: "500m"
-        limits:
-          memory: "1Gi"
-          cpu: "1"
-    - name: jnlp
-      image: jenkins/inbound-agent:latest
-      args: ['-secret', '$(JENKINS_SECRET)', '-name', '$(JENKINS_NAME)']
-      resources:
-        requests:
-          memory: "256Mi"
-          cpu: "200m"
-  volumes: []
+    - name: git
+      image: alpine/git
+      command:
+        - cat
+      tty: true
 '''
         }
     }
@@ -38,19 +28,20 @@ spec:
         IMAGE_REPO = "${env.DOCKER_REG}/spring-ticket"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CD_BRANCH  = 'main'
-        // Critical: JNLP agent connects to the correct TCP port
-        JENKINS_TUNNEL = 'my-jenkins-agent.jenkins.svc.cluster.local:50000'
     }
 
     options {
-        // Keep pods alive for debugging (10 minutes)
         timeout(time: 10, unit: 'MINUTES')
     }
 
     stages {
         stage('Checkout Source') {
             steps {
-                git branch: "${CD_BRANCH}", url: 'https://github.com/Thavornn/spring-ticket.git', credentialsId: 'github-token'
+                container('git') {
+                    sh """
+                        git clone -b ${CD_BRANCH} https://github.com/Thavornn/spring-ticket.git .
+                    """
+                }
             }
         }
 
