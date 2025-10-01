@@ -23,11 +23,12 @@ spec:
           cpu: "1"
     - name: jnlp
       image: jenkins/inbound-agent:latest
-      args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
+      args: ['-secret', '$(JENKINS_SECRET)', '-name', '$(JENKINS_NAME)']
       resources:
         requests:
           memory: "256Mi"
           cpu: "200m"
+  volumes: []
 '''
         }
     }
@@ -37,6 +38,8 @@ spec:
         IMAGE_REPO = "${env.DOCKER_REG}/spring-ticket"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CD_BRANCH  = 'main'
+        // Critical: JNLP agent connects to the correct TCP port
+        JENKINS_TUNNEL = 'my-jenkins-agent.jenkins.svc.cluster.local:50000'
     }
 
     options {
