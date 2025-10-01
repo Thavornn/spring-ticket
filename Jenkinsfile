@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_USERNAME = "pinkmelon"  
-        IMAGE_NAME = "pinkmelon/spring-product" // Docker repo format
+        IMAGE_NAME = "pinkmelon/spring-productt" // Docker repo format
     }
 
     stages {
