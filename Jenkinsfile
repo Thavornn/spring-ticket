@@ -1,7 +1,6 @@
 pipeline {
     agent {
         kubernetes {
-            label 'docker-agent'
             defaultContainer 'docker'
             yaml '''
 apiVersion: v1
@@ -12,27 +11,27 @@ spec:
       image: docker:24-dind
       securityContext:
         privileged: true
+      command:
+        - cat
+      tty: true
+    - name: jnlp
+      image: jenkins/inbound-agent:latest
+      args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
 '''
         }
     }
 
-    triggers {
-        githubPush()
-    }
-
     environment {
-        DOCKERHUB_CRED = 'dockerhub-token' 
-        GITHUB_CRED    = 'github-token'
-        DOCKER_REG     = 'pinkmelon'
-        IMAGE_REPO     = "${env.DOCKER_REG}/hw-spring-product"
-        IMAGE_TAG      = "${env.BUILD_NUMBER}"
-        CD_BRANCH      = 'master'
+        DOCKER_REG = 'pinkmelon'
+        IMAGE_REPO = "${env.DOCKER_REG}/my-app"
+        IMAGE_TAG  = "${env.BUILD_NUMBER}"
+        CD_BRANCH  = 'master'
     }
 
     stages {
         stage('Checkout Source') {
             steps {
-                git branch: "${CD_BRANCH}", url: 'https://github.com/Thavornn/17_Yin_Chheng-Thavorn_SR_SPRING_HOMEWORK001', credentialsId: 'github-token'
+                git branch: "${CD_BRANCH}", url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git', credentialsId: 'github-token'
             }
         }
 
@@ -40,6 +39,7 @@ spec:
             steps {
                 container('docker') {
                     sh """
+                        docker version
                         docker build -t ${IMAGE_REPO}:${IMAGE_TAG} .
                     """
                 }
@@ -68,7 +68,7 @@ spec:
             echo '✅ Build & Push completed successfully!'
         }
         failure {
-            echo ' Pipeline failed.'
+            echo '❌ Pipeline failed.'
         }
     }
 }
